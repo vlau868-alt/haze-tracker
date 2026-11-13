@@ -2,44 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hello, World</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #eaf6ff;
-      font-family: sans-serif;
-    }
-    h1 { color: #2d6a4f; }
-    svg { width: 300px; height: auto; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Haze Tracker</title>
+  <meta name="description" content="Live 24-hour PSI and 1-hour PM2.5 for Singapore regions, with threshold alerts.">
+  <meta name="theme-color" content="#1b3a4b">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Haze">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Hello, World!</h1>
-  <svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg" aria-label="A flower">
-    <!-- stem -->
-    <path d="M100 150 C95 200 105 250 100 295" stroke="#2d6a4f" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <!-- leaves -->
-    <path d="M100 230 C70 210 50 215 40 225 C60 245 85 245 100 230 Z" fill="#40916c"/>
-    <path d="M100 200 C130 180 150 185 160 195 C140 215 115 215 100 200 Z" fill="#52b788"/>
-    <!-- petals -->
-    <g fill="#ff8fab" stroke="#e5628a" stroke-width="1.5">
-      <ellipse cx="100" cy="60" rx="16" ry="30"/>
-      <ellipse cx="100" cy="60" rx="16" ry="30" transform="rotate(45 100 90)"/>
-      <ellipse cx="100" cy="60" rx="16" ry="30" transform="rotate(90 100 90)"/>
-      <ellipse cx="100" cy="60" rx="16" ry="30" transform="rotate(135 100 90)"/>
-      <ellipse cx="100" cy="60" rx="16" ry="30" transform="rotate(180 100 90)"/>
-      <ellipse cx="100" cy="60" rx="16" ry="30" transform="rotate(225 100 90)"/>
-      <ellipse cx="100" cy="60" rx="16" ry="30" transform="rotate(270 100 90)"/>
-      <ellipse cx="100" cy="60" rx="16" ry="30" transform="rotate(315 100 90)"/>
-    </g>
-    <!-- center -->
-    <circle cx="100" cy="90" r="18" fill="#ffd166" stroke="#e0a800" stroke-width="2"/>
-  </svg>
+  <header class="top">
+    <img src="icons/icon-192.png" alt="" width="44" height="44" class="logo">
+    <div>
+      <h1>Haze Tracker</h1>
+      <p class="sub">Singapore air quality · NEA data</p>
+    </div>
+    <button id="refresh" class="icon-btn" aria-label="Refresh data" title="Refresh">&#x21bb;</button>
+  </header>
+
+  <main>
+    <p id="status" class="status" role="status" aria-live="polite">Loading…</p>
+
+    <section aria-labelledby="regions-h">
+      <h2 id="regions-h">Current readings</h2>
+      <div id="regions" class="grid"></div>
+      <p class="note">
+        <strong>24-hr PSI</strong> is NEA's headline index. NEA doesn't publish an hourly PSI,
+        so the <strong>1-hr</strong> figure is the hourly <strong>PM2.5</strong> concentration (µg/m³),
+        which is what changes fastest during a haze episode.
+      </p>
+    </section>
+
+    <section aria-labelledby="alerts-h" class="card">
+      <h2 id="alerts-h">Alerts</h2>
+      <form id="alert-form">
+        <label>Region
+          <select id="region">
+            <option value="any">Any region (highest)</option>
+            <option value="north">North</option>
+            <option value="west">West</option>
+            <option value="central">Central</option>
+            <option value="east">East</option>
+            <option value="south">South</option>
+          </select>
+        </label>
+        <label>Measure
+          <select id="metric">
+            <option value="psi24">24-hr PSI</option>
+            <option value="pm25">1-hr PM2.5 (µg/m³)</option>
+          </select>
+        </label>
+        <label>Notify me when it reaches
+          <input id="threshold" type="number" inputmode="numeric" min="1" max="999" step="1" required>
+        </label>
+        <p id="threshold-hint" class="hint"></p>
+        <label class="toggle">
+          <input id="enabled" type="checkbox">
+          <span>Send notifications</span>
+        </label>
+        <div class="row">
+          <button type="submit" class="primary">Save</button>
+          <button type="button" id="test" class="secondary">Send test notification</button>
+        </div>
+      </form>
+      <p id="alert-status" class="hint" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="install" class="card" hidden>
+      <h2>Add to home screen</h2>
+      <p id="install-text"></p>
+      <button id="install-btn" class="primary" hidden>Install app</button>
+    </section>
+
+    <footer>
+      <p>Data: <a href="https://data.gov.sg/collections/2438/view" target="_blank" rel="noopener">NEA via data.gov.sg</a>.
+      Not an official health advisory; see <a href="https://www.haze.gov.sg" target="_blank" rel="noopener">haze.gov.sg</a>.</p>
+    </footer>
+  </main>
+
+  <script src="shared.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
